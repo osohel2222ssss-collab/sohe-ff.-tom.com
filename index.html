@@ -1,3 +1,188 @@
+
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sohel FF Top</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#080b12;color:white;font-family:Arial,sans-serif}
+header{background:#111827;padding:22px;text-align:center;border-bottom:2px solid #f5b400}
+header h1{color:#ffc400;margin:0}
+header p{color:#bbb}
+.container{max-width:950px;margin:auto;padding:18px}
+.hero{text-align:center;padding:25px 10px}
+.hero h2{color:#ffc400}
+input,select,textarea{width:100%;padding:12px;margin:7px 0;background:#182235;color:white;border:1px solid #39465c;border-radius:8px}
+button,.download{display:inline-block;background:#ffc400;color:#111;padding:11px 16px;border:0;border-radius:8px;font-weight:bold;text-decoration:none;cursor:pointer;margin:5px}
+.card{background:#141d2d;border:1px solid #344158;padding:16px;border-radius:12px;margin:12px 0}
+.card h3{color:#ffc400;margin-top:0}
+.card p{color:#ccc;overflow-wrap:anywhere}
+#admin{display:none}
+footer{text-align:center;color:#999;padding:25px}
+</style>
+</head>
+<body>
+
+<header>
+<h1>SOHEL FF TOP</h1>
+<p>Welcome to My Official Website</p>
+</header>
+
+<div class="container">
+<section class="hero">
+<h2>MY ALL FILES DOWNLOAD</h2>
+<p>Apps, Games, Tools & Files</p>
+<input id="search" placeholder="Search files..." oninput="showItems()">
+</section>
+
+<div id="items"></div>
+
+<div class="card">
+<h3>Admin Panel</h3>
+<p>নিজের ফোনের এই ব্রাউজারে কনটেন্ট পরিচালনা করতে নিচের বাটনে চাপ দাও।</p>
+<button onclick="toggleAdmin()">Open Admin Editor</button>
+</div>
+
+<section id="admin" class="card">
+<h2>Manage Files</h2>
+<input id="itemName" placeholder="App / File Name">
+<select id="itemCategory">
+<option>Apps</option>
+<option>Games</option>
+<option>Tools</option>
+<option>Files</option>
+</select>
+<input id="itemImage" placeholder="Image URL (optional)">
+<textarea id="itemDesc" placeholder="Description"></textarea>
+<input id="itemLink" placeholder="Download URL">
+<button onclick="addItem()">Add File</button>
+<button onclick="toggleAdmin()">Close Editor</button>
+<h3>Existing Files</h3>
+<div id="manageItems"></div>
+</section>
+</div>
+
+<footer>
+<p>© 2026 SOHEL FF TOP | All Rights Reserved</p>
+</footer>
+
+<script>
+let items = JSON.parse(localStorage.getItem("sohelFiles") || "null") || [
+{name:"TCP Bot",category:"Tools",desc:"Gaming tool",image:"",link:""},
+{name:"Free Fire Guide",category:"Files",desc:"Free Fire guide",image:"",link:""},
+{name:"Emote App",category:"Apps",desc:"Emote collection",image:"",link:""},
+{name:"Gaming Tools",category:"Tools",desc:"Gaming tools",image:"",link:""},
+{name:"Free Fire Wallpaper",category:"Files",desc:"Wallpaper collection",image:"",link:""},
+{name:"Sheru Glitch File",category:"Files",desc:"Gaming file",image:"",link:""},
+{name:"Tom Sensi App",category:"Apps",desc:"Sensitivity app",image:"",link:""},
+{name:"Gaming Tips",category:"Files",desc:"Gaming tips",image:"",link:""},
+{name:"All Phone Root Guide",category:"Files",desc:"Phone guide",image:"",link:""},
+{name:"Voice App",category:"Apps",desc:"Voice app",image:"",link:""}
+];
+
+function save(){
+localStorage.setItem("sohelFiles",JSON.stringify(items));
+showItems();
+showManage();
+}
+
+function showItems(){
+let q=document.getElementById("search").value.toLowerCase();
+let box=document.getElementById("items");
+box.innerHTML="";
+items.filter(x=>(x.name+" "+x.category).toLowerCase().includes(q))
+.forEach(x=>{
+let card=document.createElement("div");
+card.className="card";
+let h=document.createElement("h3");
+h.textContent=x.name;
+let p=document.createElement("p");
+p.textContent=x.category+" • "+x.desc;
+card.append(h,p);
+if(x.image){
+let img=document.createElement("img");
+img.src=x.image;
+img.alt=x.name;
+img.style="width:100%;max-height:180px;object-fit:cover;border-radius:8px";
+card.append(img);
+}
+if(x.link){
+let a=document.createElement("a");
+a.className="download";
+a.href=x.link;
+a.target="_blank";
+a.rel="noopener";
+a.textContent="DOWNLOAD";
+card.append(a);
+}else{
+let p2=document.createElement("p");
+p2.textContent="Download link not added yet";
+card.append(p2);
+}
+box.append(card);
+});
+}
+
+function toggleAdmin(){
+let a=document.getElementById("admin");
+a.style.display=a.style.display==="block"?"none":"block";
+showManage();
+}
+
+function addItem(){
+let name=document.getElementById("itemName").value.trim();
+let category=document.getElementById("itemCategory").value;
+let image=document.getElementById("itemImage").value.trim();
+let desc=document.getElementById("itemDesc").value.trim();
+let link=document.getElementById("itemLink").value.trim();
+if(!name){alert("ফাইলের নাম লিখুন");return;}
+items.push({name,category,image,desc,link});
+save();
+document.getElementById("itemName").value="";
+document.getElementById("itemImage").value="";
+document.getElementById("itemDesc").value="";
+document.getElementById("itemLink").value="";
+alert("এই ব্রাউজারে ফাইল যোগ হয়েছে");
+}
+
+function showManage(){
+let box=document.getElementById("manageItems");
+if(!box)return;
+box.innerHTML="";
+items.forEach((x,i)=>{
+let row=document.createElement("div");
+row.className="card";
+let name=document.createElement("p");
+name.textContent=x.name;
+let edit=document.createElement("button");
+edit.textContent="Edit";
+edit.onclick=()=>{
+let n=prompt("নতুন নাম লিখুন",x.name);
+if(n===null)return;
+let l=prompt("নতুন Download URL লিখুন",x.link);
+if(l===null)return;
+items[i].name=n.trim()||x.name;
+items[i].link=l.trim();
+save();
+};
+let del=document.createElement("button");
+del.textContent="Delete";
+del.onclick=()=>{
+if(confirm("এই ফাইলটি মুছবেন?")){
+items.splice(i,1);
+save();
+}
+};
+row.append(name,edit,del);
+box.append(row);
+});
+}
+showItems();
+</script>
+</body>
+</html>
 <!DOCTYPE html>
 <html lang="en">
 <head>
