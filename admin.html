@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SOHEL FF TOP Admin</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0a0d14;color:#f4f4f4;font-family:Arial,sans-serif}.wrap{max-width:760px;margin:28px auto;padding:16px}.panel{background:#151b27;border:1px solid #343c4d;border-radius:14px;padding:20px;margin-bottom:18px}h1,h2{color:#f3c453}input,textarea,select{display:block;width:100%;margin:9px 0;padding:12px;border-radius:8px;border:1px solid #4c5668;background:#0e1420;color:white}button{padding:11px 16px;border:0;border-radius:8px;background:#e4b544;color:#151515;font-weight:bold;margin:5px 5px 5px 0}button.danger{background:#b83c3c;color:white}.muted{color:#aeb7c6}.item{border-top:1px solid #3a4250;padding:12px 0}.hidden{display:none}.status{white-space:pre-wrap;color:#f3c453}
+</style></head><body><main class="wrap">
+<h1>SOHEL FF TOP — Admin Panel</h1>
+<section id="loginPanel" class="panel"><h2>Admin Login</h2><p class="muted">শুধু নির্ধারিত Admin ইমেইল দিয়ে লগইন করুন।</p><input id="email" type="email" placeholder="Admin email"><input id="password" type="password" placeholder="Password"><button id="loginBtn">Login</button><div id="loginStatus" class="status"></div></section>
+<section id="appPanel" class="hidden">
+<div class="panel"><p id="who" class="muted"></p><button id="logoutBtn">Logout</button><h2>নতুন ফাইল যোগ করুন</h2>
+<form id="fileForm"><input id="name" required placeholder="ফাইলের নাম"><select id="category"><option>Apps</option><option>Games</option><option>Tools</option><option>Other</option></select><textarea id="description" placeholder="বর্ণনা"></textarea><label>ছবি (ঐচ্ছিক)</label><input id="imageFile" type="file" accept="image/*"><label>ডাউনলোড ফাইল (ঐচ্ছিক)</label><input id="downloadFile" type="file"><input id="downloadUrl" type="url" placeholder="অথবা Download URL দিন"><button type="submit">Save / Upload</button></form><div id="formStatus" class="status"></div></div>
+<div class="panel"><h2>আগের ফাইলগুলো</h2><div id="list">লোড হচ্ছে...</div></div>
+</section></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="config.js"></script>
+<script>
+(() => {
+ const db=supabase.createClient(window.SOHEL_SUPABASE_URL,window.SOHEL_SUPABASE_PUBLISHABLE_KEY);
+ const $=id=>document.getElementById(id);
+ const loginPanel=$('loginPanel'),appPanel=$('appPanel');
+ const adminEmail=(window.SOHEL_ADMIN_EMAIL||'').toLowerCase();
+ function status(id,msg){$(id).textContent=msg;}
+ function safeName(s){return s.normalize('NFKD').replace(/[^a-zA-Z0-9._-]/g,'_').replace(/_+/g,'_').slice(0,90)||'file';}
+ async function checkSession(){const {data:{session}}=await db.auth.getSession();if(session&&session.user.email?.toLowerCase()===adminEmail){showApp(session.user.email);}else{if(session)await db.auth.signOut();loginPanel.classList.remove('hidden');appPanel.classList.add('hidden');}}
+ function showApp(email){loginPanel.classList.add('hidden');appPanel.classList.remove('hidden');$('who').textContent='Logged in: '+email;loadList();}
+ $('loginBtn').onclick=async()=>{status('loginStatus','Logging in...');const {data,error}=await db.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){status('loginStatus',error.message);return;}if(data.user.email?.toLowerCase()!==adminEmail){await db.auth.signOut();status('loginStatus','এই ইমেইলটি Admin হিসেবে অনুমোদিত নয়।');return;}status('loginStatus','');showApp(data.user.email);};
+ $('logoutBtn').onclick=async()=>{await db.auth.signOut();checkSession();};
+ async function upload(file){if(!file)return '';const path=Date.now()+'-'+safeName(file.name);const {error}=await db.storage.from('site-files').upload(path,file,{upsert:false});if(error)throw error;const {data}=db.storage.from('site-files').getPublicUrl(path);return data.publicUrl;}
+ $('fileForm').onsubmit=async e=>{e.preventDefault();status('formStatus','Uploading...');try{const imageUrl=await upload($('imageFile').files[0]);const uploadedUrl=await upload($('downloadFile').files[0]);const downloadUrl=uploadedUrl||$('downloadUrl').value.trim();const {error}=await db.from('site_files').insert({name:$('name').value.trim(),category:$('category').value,description:$('description').value.trim(),image_url:imageUrl,download_url:downloadUrl});if(error)throw error;$('fileForm').reset();status('formStatus','সফলভাবে যোগ হয়েছে।');loadList();}catch(err){status('formStatus','সমস্যা: '+err.message);}};
+ async function loadList(){const box=$('list');box.textContent='লোড হচ্ছে...';const {data,error}=await db.from('site_files').select('*').order('created_at',{ascending:false});if(error){box.textContent=error.message;return;}box.innerHTML='';if(!data?.length){box.textContent='এখনো কোনো ফাইল নেই।';return;}data.forEach(row=>{const div=document.createElement('div');div.className='item';const title=document.createElement('strong');title.textContent=row.name+' ('+row.category+')';const del=document.createElement('button');del.className='danger';del.textContent='Delete';del.onclick=async()=>{if(!confirm('এই এন্ট্রিটি মুছবেন?'))return;const {error}=await db.from('site_files').delete().eq('id',row.id);if(error)alert(error.message);else loadList();};div.append(title,del);box.appendChild(div);});}
+ checkSession();
+})();
+</script></body></html>
